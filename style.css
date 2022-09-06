@@ -1,0 +1,18 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* body > div {
+    background-color: red;
+}
+
+body > div > div{
+    background-color: blue;
+} */
