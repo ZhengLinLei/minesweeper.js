@@ -120,7 +120,7 @@ class Minesweeper {
                 transform: translate(-50%, -50%);
                 background-color: ${this.childConfig.color};
                 z-index: 9;
-                transition: 0.2s;
+                transition: 0.2s, opacity 0.5s;
             }
 
             #${id} > .m_child:hover::after{
@@ -148,8 +148,95 @@ class Minesweeper {
 
         return arr_;
     }
-    openEmpty (x, y, el) {
+    findEmpty (x1, y1) {
+        let renderEmpty = [];
+        let findRender = [];
+        let continueRender = 1;
+        let blanck_ = 0;
 
+        // Reload
+        let y = y1;
+        let x = x1;
+
+        while(continueRender){
+            // 0 1 2
+            // 3   4
+            // 5 6 7
+
+            // reset blanck
+            blanck_ = 0;
+
+            for(let j = 0; j < 8; j++){
+                if(j == 0){
+                    y -= 1;
+                    x -= 1;
+                }
+                else if([1, 2, 6, 7].includes(j)){
+                    x += 1;
+                }
+                else if(j == 3 || j == 5){
+                    y += 1;
+                    x -= 2;
+                }
+                else if(j == 4){
+                    x += 2;
+                }
+                // Check borders
+                if(x >= 0 && y >= 0 && x <= this.configElement.width-1 && y <= this.configElement.height-1){
+                    if(this.virtualGame[`_${x}_${y}`] == null){
+                        this.virtualGame[`_${x}_${y}`] = 0;
+                        // Add to queue to call it later
+                        renderEmpty.push([x, y]);
+                        findRender.push([x, y]);
+                        blanck_++;
+                    }
+                }
+            }
+            
+            // Cut running
+            if(blanck_ === 0 && findRender.length === 0){
+                continueRender = 0;
+            }else{
+                x = findRender[0][0];
+                y = findRender[0][0];
+
+                findRender.shift();
+            }
+        }
+        
+        console.log(renderEmpty)
+        //Open all blanck squares
+        renderEmpty.forEach(el => {this.openEmpty(el[0], el[1])});
+    }
+    openEmpty (x1, y1) {
+        // Reload
+        let y = y1;
+        let x = x1;
+        // 0 1 2
+        // 3   4
+        // 5 6 7
+
+        for(let j = 0; j < 8; j++){
+            if(j == 0){
+                y -= 1;
+                x -= 1;
+            }
+            else if([1, 2, 6, 7].includes(j)){
+                x += 1;
+            }
+            else if(j == 3 || j == 5){
+                y += 1;
+                x -= 2;
+            }
+            else if(j == 4){
+                x += 2;
+            }
+            // Check borders
+            if(x >= 0 && y >= 0 && x <= this.configElement.width-1 && y <= this.configElement.height-1){
+                this.configElement.child[`_${x}_${y}`].classList.add('active');
+            }
+        }
+        
     }
     renderElement () {
         this.parentElement.style.width = `${this.configElement.width * this.childConfig.size}px`; 
@@ -177,7 +264,7 @@ class Minesweeper {
                 // el.style.justifyContent = "center";
                 // el.style.alignItems = "center";
 
-                el.addEventListener('click', () => this.childClick(e, i, el));
+                el.onclick =  () => this.childClick(e, i, el);
                 // el.innerHTML = "0"
 
                 this.parentElement.appendChild(el);
@@ -190,8 +277,6 @@ class Minesweeper {
             }
         }
 
-        console.log(this.configElement.child);
-        console.log(Object.values(this.configElement.child))
 
         // Create Mines
         let mines_arr = this.randomMines(this.configElement.mines);
@@ -247,14 +332,25 @@ class Minesweeper {
 
         // console.log(this.virtualGame);
         Object.values(this.configElement.child).forEach(e => {
-            console.log(e)
+            // console.log(e)
             e.innerHTML = this.virtualGame[`_${e.getAttribute('n1')}_${e.getAttribute('n2')}`];
         });
+
+        window.addEventListener('dblclick', ()=>{
+            Object.values(this.configElement.child).forEach(e => {
+                // console.log(e)
+                e.innerHTML = this.virtualGame[`_${e.getAttribute('n1')}_${e.getAttribute('n2')}`];
+            });
+        })
     }
 
     // Square Clicked
     childClick (n1, n2, e) {
-        e.classList.add('active');
+        // console.log(e.classList.contains('active'))
+        if(this.virtualGame[`_${n1}_${n2}`] == null && !e.classList.contains('active')){
+            e.classList.add('active');
+            this.findEmpty(n1, n2);
+        }
     }
 }
 
